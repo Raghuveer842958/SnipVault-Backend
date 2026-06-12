@@ -23,10 +23,6 @@ router.put("/:id", authMiddleware, updateFolder);
 
 router.delete("/:id", authMiddleware, deleteFolder);
 
-router.get(
-    "/:id/snippets",
-    authMiddleware,
-    getFolderSnippets
-);
+router.get("/:id/snippets", authMiddleware, getFolderSnippets);
 
 export default router;

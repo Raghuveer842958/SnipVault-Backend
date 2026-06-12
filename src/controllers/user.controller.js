@@ -1,89 +1,99 @@
 import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
-import {
-    registerSchema,
-    loginSchema,
-} from "../validators/auth.validator.js";
+import Snippet from "../models/Snippet.js";
+import Folder from "../models/Folder.js";
+
+import { updateProfileSchema } from "../validators/user.validator.js";
 
 
-
-export const registerUser = async (req, res, next) => {
+export const getDashboardData = async (
+    req,
+    res,
+    next
+) => {
     try {
-        const validatedData = registerSchema.parse(req.body);
 
-        const { name, email, password } = validatedData;
+        const userId = req.user._id;
 
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: "User already exists",
+        const totalSnippets =
+            await Snippet.countDocuments({
+                createdBy: userId,
             });
-        }
 
-        const user = await User.create({
-            name,
-            email,
-            password,
+        const totalFolders =
+            await Folder.countDocuments({
+                createdBy: userId,
+            });
+
+        const snippets = await Snippet.find({
+            createdBy: userId,
         });
 
-        const token = generateToken(user._id);
+        const totalLikesReceived =
+            snippets.reduce(
+                (acc, snippet) =>
+                    acc + snippet.likes.length,
+                0
+            );
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        const recentSnippets =
+            await Snippet.find({
+                createdBy: userId,
+            })
+                .sort({ createdAt: -1 })
+                .limit(5);
 
-        res.status(201).json({
+        res.status(200).json({
             success: true,
-            message: "User registered successfully",
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar,
+
+            dashboard: {
+                totalSnippets,
+                totalFolders,
+                totalLikesReceived,
+                recentSnippets,
             },
         });
+
     } catch (error) {
         next(error);
     }
 };
 
-export const loginUser = async (req, res, next) => {
+export const updateProfile = async (
+    req,
+    res,
+    next
+) => {
     try {
-        const validatedData = loginSchema.parse(req.body);
 
-        const { email, password } = validatedData;
+        const validatedData =
+            updateProfileSchema.parse(req.body);
 
-        const user = await User.findOne({ email });
+        const user = await User.findById(
+            req.user._id
+        );
 
         if (!user) {
-            return res.status(400).json({
+            return res.status(404).json({
                 success: false,
-                message: "Invalid email or password",
+                message: "User not found",
             });
         }
 
-        const isPasswordMatched = await user.matchPassword(password);
-
-        if (!isPasswordMatched) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid email or password",
-            });
+        if (validatedData.name) {
+            user.name = validatedData.name;
         }
 
-        const token = generateToken(user._id);
+        if (validatedData.avatar) {
+            user.avatar = validatedData.avatar;
+        }
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        await user.save();
 
         res.status(200).json({
             success: true,
-            message: "Login successful",
+            message:
+                "Profile updated successfully",
+
             user: {
                 _id: user._id,
                 name: user.name,
@@ -91,35 +101,8 @@ export const loginUser = async (req, res, next) => {
                 avatar: user.avatar,
             },
         });
+
     } catch (error) {
         next(error);
     }
 };
-
-export const logoutUser = async (req, res, next) => {
-    try {
-        res.cookie("token", "", {
-            httpOnly: true,
-            expires: new Date(0),
-        });
-
-        res.status(200).json({
-            success: true,
-            message: "Logout successful",
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const getCurrentUser = async (req, res, next) => {
-    try {
-        res.status(200).json({
-            success: true,
-            user: req.user,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-

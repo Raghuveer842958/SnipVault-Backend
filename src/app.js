@@ -5,10 +5,11 @@ import cookieParser from "cookie-parser";
 
 import connectDB from "./config/db.js";
 
-import authRouter from "./routes/user.routes.js";
+import authRouter from "./routes/auth.routes.js";
 import snippetRouter from "./routes/snippet.routes.js";
 import commentRouter from "./routes/comment.routes.js";
 import foldersRouter from "./routes/folder.routes.js";
+import userRouter from "./routes/user.routes.js";
 
 import errorHandler from "./middleware/error.middleware.js";
 
@@ -34,6 +35,7 @@ app.use('/api/auth', authRouter)
 app.use("/api/snippets", snippetRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/folders", foldersRouter);
+app.use("/api/users", userRouter);
 
 app.get("/", (req, res) => {
     res.json({

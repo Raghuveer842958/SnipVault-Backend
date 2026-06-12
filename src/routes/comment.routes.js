@@ -10,22 +10,10 @@ import {
 
 const router = express.Router();
 
-router.post(
-    "/:snippetId",
-    authMiddleware,
-    createComment
-);
+router.post("/:snippetId", authMiddleware, createComment);
 
-router.get(
-    "/:snippetId",
-    authMiddleware,
-    getCommentsBySnippet
-);
+router.get("/:snippetId", authMiddleware, getCommentsBySnippet);
 
-router.delete(
-    "/:commentId",
-    authMiddleware,
-    deleteComment
-);
+router.delete("/:commentId", authMiddleware, deleteComment);
 
 export default router;
