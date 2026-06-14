@@ -50,7 +50,7 @@ export const exploreSnippets = async (req, res, next) => {
             language,
             sort = "newest",
             page = 1,
-            limit = 10,
+            limit = 6,
         } = req.query;
 
         const query = {
@@ -80,22 +80,35 @@ export const exploreSnippets = async (req, res, next) => {
             query.language = language;
         }
 
-        let sortOption = {
-            createdAt: -1,
-        };
+        // let sortOption = {
+        //     createdAt: -1,
+        // };
 
-        // Most liked
-        if (sort === "likes") {
-            sortOption = {
-                likes: -1,
-            };
-        }
+        // // Most liked
+        // if (sort === "likes") {
+        //     sortOption = {
+        //         likes: -1,
+        //     };
+        // }
 
-        const snippets = await Snippet.find(query)
+        // const snippets = await Snippet.find(query)
+        //     .populate("createdBy", "name")
+        //     .sort(sortOption)
+        //     .skip((page - 1) * limit)
+        //     .limit(Number(limit));
+
+        let snippets = await Snippet.find(query)
             .populate("createdBy", "name")
-            .sort(sortOption)
+            .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(Number(limit));
+
+        if (sort === "likes") {
+            snippets.sort(
+                (a, b) =>
+                    b.likes.length - a.likes.length
+            );
+        }
 
         const totalSnippets =
             await Snippet.countDocuments(query);

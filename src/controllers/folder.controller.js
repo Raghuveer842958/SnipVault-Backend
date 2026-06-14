@@ -34,8 +34,8 @@ export const getAllFolders = async (req, res, next) => {
         const folders = await Folder.find({
             createdBy: req.user._id,
         })
-        .populate("parentFolder", "name")
-        .sort({ createdAt: -1 });
+            .populate("parentFolder", "name")
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -144,7 +144,7 @@ export const deleteFolder = async (req, res, next) => {
     }
 };
 
-export const getFolderSnippets = async (req, res, next) => {
+export const getFolderSnippets2 = async (req, res, next) => {
     try {
 
         const snippets = await Snippet.find({
@@ -157,6 +157,34 @@ export const getFolderSnippets = async (req, res, next) => {
         res.status(200).json({
             success: true,
             count: snippets.length,
+            snippets,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getFolderSnippets = async (req, res, next) => {
+    try {
+
+        const childFolders = await Folder.find({
+            parentFolder: req.params.id,
+            createdBy: req.user._id,
+        })
+            .select("name parentFolder")
+            .sort({ createdAt: -1 });
+
+        const snippets = await Snippet.find({
+            folder: req.params.id,
+            createdBy: req.user._id,
+        }).sort({
+            createdAt: -1,
+        });
+
+        res.status(200).json({
+            success: true,
+            childFolders,
             snippets,
         });
 
